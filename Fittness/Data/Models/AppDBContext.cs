@@ -10,6 +10,7 @@ namespace Fittness.Data
         {
 
         }
+
         public DbSet<Home> Homes { get; set; }
         public DbSet<Card> Cards { get; set; }
 
@@ -23,7 +24,11 @@ namespace Fittness.Data
         public DbSet<PalateRecipe> PalateRecipes{ get; set; }
         public DbSet<PalateIngredient> PalateIngredients { get; set; }
         public DbSet<PalatePrepare> PalatePrepares { get; set; }
-        public DbSet<User> User { get; set; }
+        public DbSet<ProfileUser> ProfileUsers { get; set; }
+        public DbSet<User> Users { get; set; }
+
+
+
     }
 
 }

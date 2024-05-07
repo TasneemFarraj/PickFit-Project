@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿#nullable disable
 
-#nullable disable
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Fittness.Migrations
 {
@@ -10,27 +10,29 @@ namespace Fittness.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<byte[]>(
+            migrationBuilder.DropColumn(
+                name: "Image",
+                table: "Palates1");
+
+            migrationBuilder.AddColumn<string>(
                 name: "Image",
                 table: "Palates1",
-                type: "varbinary(max)",
-                nullable: true,
-                oldClrType: typeof(byte[]),
-                oldType: "varbinary(max)");
+                type: "nvarchar(max)",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<byte[]>(
+            migrationBuilder.DropColumn(
+                name: "Image",
+                table: "Palates1");
+
+            migrationBuilder.AddColumn<byte[]>(
                 name: "Image",
                 table: "Palates1",
                 type: "varbinary(max)",
-                nullable: false,
-                defaultValue: new byte[0],
-                oldClrType: typeof(byte[]),
-                oldType: "varbinary(max)",
-                oldNullable: true);
+                nullable: true);
         }
     }
 }
