@@ -56,6 +56,7 @@ public class CardRepository : ICardRepository
             data.WorkingDay = card.WorkingDay;
             data.Rating = card.Rating;
             data.Img = card.Img;
+
            _db.Cards.Update(data);
            _db.SaveChanges();
         }

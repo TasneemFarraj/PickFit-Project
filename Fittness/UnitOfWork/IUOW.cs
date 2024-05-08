@@ -1,4 +1,5 @@
-﻿using Fittness.Repository.IRepo;
+﻿using Fittness.Data.Models;
+using Fittness.Repository.IRepo;
 using Fittness.Repository.Repo;
 
 namespace Fittness.UnitOfWork;
@@ -10,6 +11,7 @@ public interface IUOW
     public IPalate1Repository Palate1 { get; set; }
     public IPalateImgRepository PalateImg { get; set; }
     public ICertificateRepository Certificate { get; set; }
+    public IProfileUserRepository ProfileUser { get; set; }
 
 
 

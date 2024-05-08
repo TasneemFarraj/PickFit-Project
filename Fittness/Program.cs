@@ -30,6 +30,8 @@ builder.Services.AddScoped<ICardRepository, CardRepository>();
 builder.Services.AddScoped<IPalateIngredientRepository, PalateIngredientRepository>();
 builder.Services.AddScoped<IPalateImgRepository, PalateImgRepository>();
 builder.Services.AddScoped<ICertificateRepository, CertificateRepository>();
+builder.Services.AddScoped<IProfileUserRepository, ProfileUserRepository>();
+
 
 
 
