@@ -55,5 +55,48 @@ public class ReadCertificateDto
         public string Address { get; set; }
         public string Country { get; set; }
     }
+public class ReadfrequentlyquestionsDto
+{
+    public int Id { get; set; }
+    public string Question { get; set; }
+    public string Answer { get; set; }
+}
+public class ReadHomeDto
+{
+
+    public int Id { get; set; }
+    public string Name { get; set; }
+
+}
+public class ReadRecipeDto
+{
+
+    public int Id { get; set; }
+    public string PreparationTime { get; set; }
+    public string CookingTime { get; set; }
+    public int NumberOfPeople { get; set; }
+    public string DifficultyLevel { get; set; }
+
+
+}
+public class ReadPrepareDto
+{
+    public int Id { get; set; }
+    public string step_1 { get; set; }
+    public string step_2 { get; set; }
+    public string step_3 { get; set; }
+    public string step_4 { get; set; }
+    public string step_5 { get; set; }
+    public string step_6 { get; set; }
+    public string step_7 { get; set; }
+}
+public class ReadpalitNutritonDto
+{
+    public int Id { get; set; }
+    public string Fats { get; set; }
+    public string protein { get; set; }
+    public string carbohydrates { get; set; }
+    public string calories { get; set; }
+}
 
 

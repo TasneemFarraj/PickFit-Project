@@ -1,9 +1,15 @@
-﻿using Fittness.Data.Models;
+﻿using Fittness.AutoMapper;
 using Fittness.Data;
+using Fittness.Data.Enum;
+using Fittness.Data.Models;
+using Fittness.Dtos.CredDtos;
+using Fittness.Response;
+using Fittness.UnitOfWork;
+using Fittness.Upload;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 
 namespace Fittness.Controllers
 {
@@ -11,97 +17,177 @@ namespace Fittness.Controllers
     [ApiController]
     public class PalateRecipeController : ControllerBase
     {
-        public PalateRecipeController(AppDBContext db)
+        private readonly AppDBContext _db;
+        private readonly IUOW _uOW;
+        public PalateRecipeController(AppDBContext db, IUOW uOW)
         {
             _db = db;
+            _uOW = uOW;
         }
-        private readonly AppDBContext _db;
-
-        //Get methods 
-        [HttpGet]
-        public async Task<IActionResult> PalateRecipes()
+        [HttpGet(nameof(GetRecipe))]
+        public async Task<ResponseStandardJsonApi> GetRecipe()
         {
-            var Palate = await _db.PalateRecipes.ToListAsync();
-            return Ok(Palate);
-
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> PalateRecipes(int id)
-        {
-            var Palate = await _db.PalateRecipes.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (Palate == null)
+            var apiResponse = new ResponseStandardJsonApi();
+            try
             {
-                return NotFound($"Palate Id {id} not exist!");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.PalateRecipe.GetListAsync();
+                var data = mapper.Map<List<ReadRecipeDto>>(result);
+                if (data.Count() > 0)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
             }
-
-            _db.SaveChanges();
-            return Ok(Palate);
-        }
-
-
-        //Post method
-        [HttpPost]
-
-        public async Task<IActionResult> PalateRecipes(string Preparatio_time, string Cooking_time, int NumberOf_people, string Difficulty_level)
-        {
-            PalateRecipe palate = new()
+            catch (Exception ex)
             {
-                PreparationTime = Preparatio_time,
-                CookingTime = Cooking_time,
-                NumberOfPeople = NumberOf_people,
-                DifficultyLevel = Difficulty_level,
-            };
-            await _db.PalateRecipes.AddAsync(palate);
-            _db.SaveChanges();
-            return Ok(palate);
-        }
-
-        //Put method
-        [HttpPut]
-        public async Task<IActionResult> PalateRecipes(PalateRecipe palate)
-        {
-            var Palate = await _db.PalateRecipes.SingleOrDefaultAsync(x => x.Id == palate.Id);
-
-            if (Palate == null)
-            {
-                return NotFound($"Palate Id {palate.Id} not exist!");
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
             }
-            _db.SaveChanges();
-            return Ok(palate);
+            return apiResponse;
         }
-
-        //Delete method
-        [HttpDelete("id")]
-        public async Task<IActionResult> RemovePalateRecipes(int id)
+        [HttpGet(nameof(GetRecipeById))]
+        public async Task<ResponseStandardJsonApi> GetRecipeById(int Id)
         {
-            var Palate = await _db.PalateRecipes.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (Palate == null)
+            var apiResponse = new ResponseStandardJsonApi();
+            try
             {
-                return NotFound($"Palate Id {id} not exist!");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.PalateRecipe.GetAsync(Id);
+                var data = mapper.Map<ReadRecipeDto>(result);
+                if (data is not null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
             }
-            _db.PalateRecipes.Remove(Palate);
-            await _db.SaveChangesAsync();
-            return Ok(Palate);
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
         }
-
-        //Patch method
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdatePalateRecipesPatct
-        ([FromBody] JsonPatchDocument<PalateRecipe> palate, [FromRoute] int id)
+        [HttpPost(nameof(AddRecipe))]
+        public async Task<ResponseStandardJsonApi> AddRecipe([FromForm] ReadRecipeDto dto)
         {
-            var Palate = await _db.PalateRecipes.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (Palate == null)
+            var apiResponse = new ResponseStandardJsonApi();
+            try
             {
-                return NotFound($"Palate Id {id} not exists");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<PalateRecipe>(dto);
+                await _uOW.PalateRecipe.AddRecipe(data);
+                if (data != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
             }
-            palate.ApplyTo(Palate);
-            _db.SaveChanges();
-            return Ok(Palate);
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpPut(nameof(UpdateRecipe))]
+        public async Task<ResponseStandardJsonApi> UpdateRecipe([FromForm] ReadRecipeDto dto)
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<PalateRecipe>(dto);
 
+                await _uOW.PalateRecipe.UpdateRecipe(data);
+                if (data != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpDelete(nameof(RemoveRecipe))]
+        public async Task<ResponseStandardJsonApi> RemoveRecipe(int id)
+        {
+            await _uOW.PalateRecipe.DeleteRecipe(id);
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                await _uOW.PalateRecipe.DeleteRecipe(id);
+                if (id != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = Ok("Delete");
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = null;
+            }
+            return apiResponse;
         }
     }
 }

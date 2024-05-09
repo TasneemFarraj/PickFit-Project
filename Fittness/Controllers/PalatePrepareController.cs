@@ -1,9 +1,16 @@
-﻿using Fittness.Data.Models;
+﻿using Fittness.AutoMapper;
 using Fittness.Data;
+using Fittness.Data.Enum;
+using Fittness.Data.Models;
+using Fittness.Dtos.CredDtos;
+using Fittness.Response;
+using Fittness.UnitOfWork;
+using Fittness.Upload;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Numerics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Fittness.Controllers
 {
@@ -11,102 +18,193 @@ namespace Fittness.Controllers
     [ApiController]
     public class PalatePrepareController : ControllerBase
     {
-        public PalatePrepareController(AppDBContext db)
+        private readonly AppDBContext _db;
+        private readonly IUOW _uOW;
+        public PalatePrepareController(AppDBContext db, IUOW uOW)
         {
             _db = db;
+            _uOW = uOW;
         }
-        private readonly AppDBContext _db;
-
-        //Get methods 
-        [HttpGet]
-        public async Task<IActionResult> HowPalate()
+        [HttpGet(nameof(GetPrepare))]
+        public async Task<ResponseStandardJsonApi> GetPrepare()
         {
-            var Palate = await _db.PalatePrepares.ToListAsync();
-            return Ok(Palate);
+            var apiResponse = new ResponseStandardJsonApi();
 
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> HowPalate (int id)
-        {
-            var Palate = await _db.PalatePrepares.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (Palate == null)
+            try
             {
-                return NotFound($"Palate Id {id} not exist!");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.PalatePrepare.GetListAsync();
+                var data = mapper.Map<List<ReadPrepareDto>>(result);
+                if (data is not null)
+                {
+
+
+
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
             }
 
-            _db.SaveChanges();
-            return Ok(Palate);
+            return apiResponse;
         }
-
-
-        //Post method
-        [HttpPost]
-        public async Task<IActionResult> HowPalate (string step_1, string step_2, string step_3, string step_4, string step_5, string step_6, string step_7)
+        [HttpGet(nameof(GetPrepareById))]
+        public async Task<ResponseStandardJsonApi> GetPrepareById(int Id)
         {
-            PalatePrepare palate = new()
+            var apiResponse = new ResponseStandardJsonApi();
+            try
             {
-                step_1=step_1,
-                step_2=step_2, 
-                step_3=step_3, 
-                step_4=step_4, 
-                step_5=step_5,
-                step_6=step_6, 
-                step_7=step_7,
-
-            };
-
-            await _db.PalatePrepares.AddAsync(palate);
-            _db.SaveChanges();
-            return Ok(palate);
-        }
-
-        //Put method
-        [HttpPut]
-        public async Task<IActionResult> HowPalate (PalateIngredient palate)
-        {
-            var Palate = await _db.PalatePrepares.SingleOrDefaultAsync(x => x.Id == palate.Id);
-
-            if (Palate == null)
-            {
-                return NotFound($"Palate Id {palate.Id} not exist!");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.PalatePrepare.GetAsync(Id);
+                var data = mapper.Map<ReadPrepareDto>(result);
+                if (data is not null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
             }
-            _db.SaveChanges();
-            return Ok(palate);
-        }
-
-        //Delete method
-        [HttpDelete("id")]
-        public async Task<IActionResult> RemoveHowPalate(int id)
-        {
-            var Palate = await _db.PalatePrepares.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (Palate == null)
+            catch (Exception ex)
             {
-                return NotFound($"Palate Id {id} not exist!");
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
             }
-            _db.PalatePrepares.Remove(Palate);
-            await _db.SaveChangesAsync();
-            return Ok(Palate);
+            return apiResponse;
         }
-
-        //Patch method
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdateHowPalatePatct
-        ([FromBody] JsonPatchDocument<PalatePrepare> palate, [FromRoute] int id)
+        [HttpPost(nameof(AddPrepare))]
+        public async Task<ResponseStandardJsonApi> AddPrepare([FromForm] ReadPrepareDto dto)
         {
-            var Palate = await _db.PalatePrepares.SingleOrDefaultAsync(x => x.Id == id);
 
-            if (Palate == null)
+            var apiResponse = new ResponseStandardJsonApi();
+
+            try
             {
-                return NotFound($"Palate Id {id} not exists");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<PalatePrepare>(dto);
+                await _uOW.PalatePrepare.AddPrepare(data);
+                if (data is not null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
             }
-            palate.ApplyTo(Palate);
-            _db.SaveChanges();
-            return Ok(Palate);
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+
+            return apiResponse;
+        }
+        [HttpPut(nameof(UpdatePrepare))]
+        public async Task<ResponseStandardJsonApi> UpdatePrepare([FromForm] ReadPrepareDto dto)
+        {
+
+            var apiResponse = new ResponseStandardJsonApi();
+
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<PalatePrepare>(dto);
+                await _uOW.PalatePrepare.UpdatePrepare(data);
+                if (data != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+
+            return apiResponse;
 
         }
+        [HttpDelete(nameof(RemovePrepare))]
+        public async Task<ResponseStandardJsonApi> RemovePrepare(int Id)
+        {
+
+            var apiResponse = new ResponseStandardJsonApi();
+
+            try
+            {
+                await _uOW.PalatePrepare.DeletePrepare(Id);
+                if (Id != 0)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = Ok("Delete");
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = null;
+            }
+
+            return apiResponse;
+
+        }
+
     }
 }
 

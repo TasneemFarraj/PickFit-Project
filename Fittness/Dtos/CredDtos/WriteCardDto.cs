@@ -49,5 +49,44 @@ public class WriteProfileUserDto
     public string Address { get; set; }
     public string Country { get; set; }
 }
+public class WriteFrequentlyDto
+{
+    public int? Id { get; set; }
+    public string Question { get; set; }
+    public string Answer { get; set; }
 
+}
+public class WriteHomeDto
+{
+    public int? Id { get; set; }
+    public string Name { get; set; }
+
+}
+public class WriteResipeDto
+{
+    public int Id { get; set; }
+    public string PreparationTime { get; set; }
+    public string CookingTime { get; set; }
+    public int NumberOfPeople { get; set; }
+    public string DifficultyLevel { get; set; }
+}
+public class WritePrepareDto
+{
+    public int Id { get; set; }
+    public string step_1 { get; set; }
+    public string step_2 { get; set; }
+    public string step_3 { get; set; }
+    public string step_4 { get; set; }
+    public string step_5 { get; set; }
+    public string step_6 { get; set; }
+    public string step_7 { get; set; }
+}
+public class WritepalitnutritonDto
+{
+    public int Id { get; set; }
+    public string Fats { get; set; }
+    public string protein { get; set; }
+    public string carbohydrates { get; set; }
+    public string calories { get; set; }
+}
 

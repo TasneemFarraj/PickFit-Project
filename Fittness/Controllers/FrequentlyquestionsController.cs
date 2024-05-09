@@ -1,8 +1,16 @@
-﻿using Fittness.Data.Models;
+﻿using Fittness.AutoMapper;
 using Fittness.Data;
+using Fittness.Data.Enum;
+using Fittness.Data.Models;
+using Fittness.Dtos.CredDtos;
+using Fittness.Response;
+using Fittness.UnitOfWork;
+using Fittness.Upload;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Numerics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Fittness.Controllers
 {
@@ -10,59 +18,179 @@ namespace Fittness.Controllers
     [ApiController]
     public class FrequentlyquestionsController : ControllerBase
     {
-        public FrequentlyquestionsController(AppDBContext db)
+        private readonly AppDBContext _db;
+        private readonly IUOW _uOW;
+        public FrequentlyquestionsController(AppDBContext db, IUOW uOW)
         {
             _db = db;
+            _uOW = uOW;
         }
-        private readonly AppDBContext _db;
-
-        [HttpGet]
-        public async Task<IActionResult> GetQuestions()
+        [HttpGet(nameof(Getquestions))]
+        public async Task<ResponseStandardJsonApi> Getquestions()
         {
-            var Frequentlie = await _db.Frequently_questions.ToListAsync();
-            return Ok(Frequentlie);
-
-        }
-        [HttpPost]
-        public async Task<IActionResult> AddQuestions(string Questions, string Answer)
-        {
-            var Frequently_questions = new Frequently_question
+            var apiResponse = new ResponseStandardJsonApi();
+            try
             {
-                Question = Questions,
-                Answer = Answer,
-
-            };
-            await _db.Frequently_questions.AddAsync(Frequently_questions);
-            _db.SaveChanges();
-            return Ok(Frequently_questions);
-        }
-
-        [HttpPut]
-        public async Task<IActionResult> UpdateQuestions(Frequently_question Questions)
-        {
-            var Questionss = await _db.Frequently_questions.SingleOrDefaultAsync(Frequently_questions => Frequently_questions.Id == Frequently_questions.Id);
-            if (Questionss == null)
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.frequentlyquestions.GetListAsync();
+                var data = mapper.Map<List<ReadfrequentlyquestionsDto>>(result);
+                if (data is not null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
             {
-                return NotFound($"Questions");
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpGet(nameof(GetquestionsById))]
+        public async Task<ResponseStandardJsonApi> GetquestionsById(int Id)
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.frequentlyquestions.GetAsync(Id);
+                var data = mapper.Map<ReadfrequentlyquestionsDto>(result);
+                if (data is not null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpPost(nameof(Addquestions))]
+        public async Task<ResponseStandardJsonApi> Addquestions([FromForm] ReadfrequentlyquestionsDto dto)
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<Frequently_question>(dto);
+                await _uOW.frequentlyquestions.Addquestion(data);
+                if (data is not null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpPut(nameof(UpdateQuestions))]
+        public async Task<ResponseStandardJsonApi> UpdateQuestions([FromForm] ReadfrequentlyquestionsDto dto)
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<Frequently_question>(dto);
+                await _uOW.frequentlyquestions.Updatequestion(data);
+                if (data != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpDelete(nameof(Removequestions))]
+        public async Task<ResponseStandardJsonApi> Removequestions(int id)
+        {
+
+            var apiResponse = new ResponseStandardJsonApi();
+
+            try
+            {
+                await _uOW.frequentlyquestions.Deletequestion(id);
+                if (id != 0)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = Ok("Delete");
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = null;
             }
 
-            Questionss.Question = Questions.Question;
-            Questionss.Answer = Questions.Answer;
-            _db.SaveChanges();
-            return Ok(Questionss);
-        }
+            return apiResponse;
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> RemoveQuestions(int id)
-        {
-            var Frequentlie = await _db.Frequently_questions.SingleOrDefaultAsync(x => x.Id == id);
-            if (Frequentlie == null)
-            {
-                return NotFound($"questions with Id {id} not found.");
-            }
-            _db.Frequently_questions.Remove(Frequentlie);
-            await _db.SaveChangesAsync();
-            return Ok(Frequentlie);
         }
     }
 }

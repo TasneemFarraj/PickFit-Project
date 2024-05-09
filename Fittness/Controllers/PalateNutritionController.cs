@@ -1,10 +1,19 @@
-﻿using Fittness.Data.Models;
+﻿using AutoMapper;
+using Fittness.AutoMapper;
 using Fittness.Data;
+using Fittness.Data.Enum;
+using Fittness.Data.Models;
+using Fittness.Dtos.CredDtos;
+using Fittness.Repository.Repo;
+using Fittness.Response;
+using Fittness.UnitOfWork;
+using Fittness.Upload;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Numerics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Fittness.Controllers
 {
@@ -12,96 +21,185 @@ namespace Fittness.Controllers
     [ApiController]
     public class PalateNutritionController : ControllerBase
     {
-        public PalateNutritionController(AppDBContext db)
+        private readonly AppDBContext _db;
+        private readonly IUOW _uOW;
+        public PalateNutritionController(AppDBContext db, IUOW uOW)
         {
             _db = db;
+            _uOW = uOW;
         }
-        private readonly AppDBContext _db;
-
-        //Get methods 
-        [HttpGet]
-        public async Task<IActionResult> PalatePerServing()
+        [HttpGet(nameof(GetNutrition))]
+        public async Task<ResponseStandardJsonApi> GetNutrition()
         {
-            var Palate = await _db.PalateNutritions.ToListAsync();
-            return Ok(Palate);
-
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> PalatePerServing(int id)
-        {
-            var Palate = await _db.PalatesImg.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (Palate == null)
+            var apiResponse = new ResponseStandardJsonApi();
+            try
             {
-                return NotFound($"Palate Id {id} not exist!");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.PalatePrepare.GetListAsync();
+                var Palate = mapper.Map<List<ReadpalitNutritonDto>>(result);
+                if (Palate.Count() > 0)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = Palate;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpGet(nameof(GetNutritionById))]
+        public async Task<ResponseStandardJsonApi> GetNutritionById(int Id)
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.PalateNutrition.GetAsync(Id);
+                var data = mapper.Map<ReadpalitNutritonDto>(result);
+                if (data is not null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpPost(nameof(AddNutrition))]
+        public async Task<ResponseStandardJsonApi> AddNutrition([FromForm] ReadpalitNutritonDto dto)
+        {
+
+            var apiResponse = new ResponseStandardJsonApi();
+
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<PalateNutrition>(dto);
+                await _uOW.PalateNutrition.AddPalateNutrition(data);
+                if (data is not null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
             }
 
-            _db.SaveChanges();
-            return Ok(Palate);
+            return apiResponse;
         }
-
-
-        //Post method
-        [HttpPost]
-        public async Task<IActionResult> PalatePerServing(string Fats, string protein, string carbohydrates, string calories)
+        [HttpPut(nameof(UpdateNutrition))]
+        public async Task<ResponseStandardJsonApi> UpdateNutrition([FromForm] ReadpalitNutritonDto dto)
         {
-            PalateNutrition palate = new()
+
+            var apiResponse = new ResponseStandardJsonApi();
+
+            try
             {
-            Fats= Fats,
-            protein= protein,
-            carbohydrates=carbohydrates,
-            calories = calories,
-            };
-
-            await _db.PalateNutritions.AddAsync(palate);
-            _db.SaveChanges();
-            return Ok(palate);
-        }
-
-        //Put method
-        [HttpPut]
-        public async Task<IActionResult> PalatePerServing(PalateNutrition palate)
-        {
-            var Palate = await _db.PalateNutritions.SingleOrDefaultAsync(x => x.Id == palate.Id);
-
-            if (Palate == null)
-            {
-                return NotFound($"Palate Id {palate.Id} not exist!");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<PalateNutrition>(dto);
+                await _uOW.PalateNutrition.UpdatePalateNutrition(data);
+                if (data != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
             }
-            _db.SaveChanges();
-            return Ok(palate);
-        }
-
-        //Delete method
-        [HttpDelete("id")]
-        public async Task<IActionResult> RemovePalatePerServing(int id)
-        {
-            var Palate = await _db.PalateNutritions.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (Palate == null)
+            catch (Exception ex)
             {
-                return NotFound($"Palate Id {id} not exist!");
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
             }
-            _db.PalateNutritions.Remove(Palate);
-            await _db.SaveChangesAsync();
-            return Ok(Palate);
+
+            return apiResponse;
+
         }
-
-        //Patch method
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdatePalatePerServingPatct
-        ([FromBody] JsonPatchDocument<PalateNutrition> palate, [FromRoute] int id)
+        [HttpDelete(nameof(RemoveNutrition))]
+        public async Task<ResponseStandardJsonApi> RemoveNutrition(int id)
         {
-            var Palate = await _db.PalateNutritions.SingleOrDefaultAsync(x => x.Id == id);
 
-            if (Palate == null)
+            var apiResponse = new ResponseStandardJsonApi();
+
+            try
             {
-                return NotFound($"Palate Id {id} not exists");
+                await _uOW.PalateNutrition.DeletePalateNutrition(id);
+                if (id != 0)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = Ok("Delete");
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = null;
+                }
             }
-            palate.ApplyTo(Palate);
-            _db.SaveChanges();
-            return Ok(Palate);
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = null;
+            }
+
+            return apiResponse;
 
         }
     }

@@ -1,5 +1,9 @@
-﻿using Fittness.Data;
+﻿using Fittness.AutoMapper;
+using Fittness.Data;
 using Fittness.Data.Models;
+using Fittness.Dtos.CredDtos;
+using Fittness.Response;
+using Fittness.UnitOfWork;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,51 +14,181 @@ namespace Fittness.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
-        public HomeController(AppDBContext db)
+        private readonly AppDBContext _db;
+        private readonly IUOW _uOW;
+        public HomeController(AppDBContext db, IUOW uOW)
         {
             _db = db;
+            _uOW = uOW;
         }
-        private readonly AppDBContext _db;
 
-        [HttpGet]
-        public async Task<IActionResult> GetHome()
+        [HttpGet(nameof(Gethome))]
+        public async Task<ResponseStandardJsonApi> Gethome()
         {
-            var Home = await _db.Homes.ToListAsync();
-            return Ok(Home);
-
-        }
-        [HttpPost]
-        public async Task<IActionResult> AddHome(string Home)
-        {
-            Home h = new() { Name = Home };
-            await _db.Homes.AddAsync(h);
-            _db.SaveChanges();
-            return Ok(h);
-        }
-        [HttpPut]
-        public async Task<IActionResult> UpdateHome(Home Homes)
-        {
-            var h = await _db.Homes.SingleOrDefaultAsync(h => h.Id == Homes.Id);
-            if (h == null)
+            var apiResponse = new ResponseStandardJsonApi();
+            try
             {
-                return NotFound($"Home ");
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.home.GetListAsync();
+                var data = mapper.Map<List<ReadHomeDto>>(result);
+                if (data.Count() > 0)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
             }
-            h.Name = Homes.Name;
-            _db.SaveChanges();
-            return Ok(h);
-        }
-        [HttpDelete("id")]
-        public async Task<IActionResult> RemoveHome(int id)
-        {
-            var c = await _db.Homes.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (c == null)
+            catch (Exception ex)
             {
-                return NotFound($"Home Id {id} not exists");
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
             }
-            _db.Homes.Remove(c);
-            _db.SaveChanges();
-            return Ok(c);
+
+            return apiResponse;
+        }
+        [HttpGet(nameof(GethomeById))]
+        public async Task<ResponseStandardJsonApi> GethomeById()
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var result = await _uOW.home.GetListAsync();
+                var data = mapper.Map<List<ReadHomeDto>>(result);
+                if (data.Count() > 0)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+            return apiResponse;
+        }
+        [HttpPost(nameof(Addhome))]
+        public async Task<ResponseStandardJsonApi> Addhome([FromForm] ReadHomeDto dto)
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<Home>(dto);
+                await _uOW.home.Addhome(data);
+                if (data != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+
+            return apiResponse;
+        }
+        [HttpPut(nameof(Updatehome))]
+        public async Task<ResponseStandardJsonApi> Updatehome([FromForm] ReadHomeDto dto)
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+            try
+            {
+                var mapper = AutoMapperConfig.CreateMapper();
+                var data = mapper.Map<Home>(dto);
+                await _uOW.home.Updatehome(data);
+                if (data != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = data;
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = new NullColumns[] { };
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = new NullColumns[] { };
+            }
+
+            return apiResponse;
+
+        }
+        [HttpDelete(nameof(Removehome))]
+        public async Task<ResponseStandardJsonApi> Removehome(int id)
+        {
+            var apiResponse = new ResponseStandardJsonApi();
+
+            try
+            {
+                await _uOW.home.Deletehome(id);
+                if (id != null)
+                {
+                    apiResponse.Message = "Show Rows";
+                    apiResponse.Code = Ok().StatusCode;
+                    apiResponse.Success = true;
+                    apiResponse.Result = Ok("Delete");
+                }
+                else
+                {
+                    apiResponse.Success = false;
+                    apiResponse.Message = "No Data";
+                    apiResponse.Code = NotFound().StatusCode;
+                    apiResponse.Result = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                apiResponse.Success = false;
+                apiResponse.Message = ex.Message;
+                apiResponse.Code = BadRequest().StatusCode;
+                apiResponse.Result = null;
+            }
+            return apiResponse;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Fittness.Data.Enum;
+using System.ComponentModel.DataAnnotations;
 
 namespace Fittness.Data.Models
 {

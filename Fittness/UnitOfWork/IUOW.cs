@@ -1,6 +1,7 @@
 ﻿using Fittness.Data.Models;
 using Fittness.Repository.IRepo;
 using Fittness.Repository.Repo;
+using Microsoft.Extensions.Hosting;
 
 namespace Fittness.UnitOfWork;
 public interface IUOW
@@ -12,7 +13,11 @@ public interface IUOW
     public IPalateImgRepository PalateImg { get; set; }
     public ICertificateRepository Certificate { get; set; }
     public IProfileUserRepository ProfileUser { get; set; }
-
+    public IFrequentlyquestionsRepostory frequentlyquestions { get; set; }
+    public IHomeRepostory home { get; set; }
+    public IPalateRecipeRepostory PalateRecipe { get; set; }
+    public IPalatePrepareRepostory PalatePrepare { get; set; }
+    public IpalateNutritionRepository PalateNutrition { get; set; }
 
 
 }

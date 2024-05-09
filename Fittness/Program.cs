@@ -31,6 +31,11 @@ builder.Services.AddScoped<IPalateIngredientRepository, PalateIngredientReposito
 builder.Services.AddScoped<IPalateImgRepository, PalateImgRepository>();
 builder.Services.AddScoped<ICertificateRepository, CertificateRepository>();
 builder.Services.AddScoped<IProfileUserRepository, ProfileUserRepository>();
+builder.Services.AddScoped<IFrequentlyquestionsRepostory, FrequentlyquestionRepostory>();
+builder.Services.AddScoped<IHomeRepostory, HomeRepostory>();
+builder.Services.AddScoped<IPalateRecipeRepostory, PalateRecipeRepostory>();
+builder.Services.AddScoped<IPalatePrepareRepostory, PalatePrepareRepostory>();
+builder.Services.AddScoped<IpalateNutritionRepository, PalateNutritionRepostory>();
 
 
 
